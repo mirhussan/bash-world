@@ -1,0 +1,21 @@
+Apache / web browser testing benchmark
+
+    apt install apache2-utils
+    ab -n 10000 -c 100 https://example.com
+
+Manually testing WPSCAN 
+
+ - git clone https://github.com/wpscanteam/wpscan.git
+
+
+ or using docker 
+
+ - docker pull wpscanteam/wpscan
+ 
+
+docker run -it --rm wpscanteam/wpscan --stealthy  --url https://example.com --enumeratev p
+docker run -it --rm wpscanteam/wpscan --stealthy  --url https://example.com --enumerate vp
+docker run -it --rm wpscanteam/wpscan --stealthy  --url https://example.com --enumerate vt
+docker run -it --rm wpscanteam/wpscan --stealthy  --url https://example.com 
+docker run -it --rm wpscanteam/wpscan --stealthy  --url https://example.com --enumerate
+docker run -it --rm wpscanteam/wpscan   --url https://example.com >example.com-stats.txt
