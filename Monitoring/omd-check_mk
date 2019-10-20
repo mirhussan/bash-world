@@ -1,0 +1,30 @@
+##Steps to instal   NEW version of check_mk
+#--------------------------
+gpg --keyserver keys.gnupg.net --recv-keys F8C1CA08A57B9ED7
+gpg --armor --export F8C1CA08A57B9ED7 | apt-key add -
+wget -q "https://labs.consol.de/repo/stable/RPM-GPG-KEY" -O - | sudo apt-key add -
+
+
+##Ubuntu     {Prefer should be Ubuntu}
+#-----
+
+echo "deb http://labs.consol.de/repo/stable/ubuntu $(lsb_release -cs) main" > /etc/apt/sources.list.d/labs-consol-stable.list
+  apt-get update
+
+##Centos
+#------
+  rpm -Uvh "https://labs.consol.de/repo/stable/rhel6/i386/labs-consol-stable.rhel6.noarch.rpm"
+  rpm -Uvh "https://labs.consol.de/repo/stable/rhel7/i386/labs-consol-stable.rhel7.noarch.rpm"
+
+
+apt update
+apt install omd
+
+wget https://mathias-kettner.de/support/1.4.0p19/check-mk-raw-1.4.0p19_0.xenial_amd64.deb   {download latest version}
+
+omd versions
+omd setversion 1.4.0p19.cre
+omd version
+
+omd create mysite
+omd start mysite
