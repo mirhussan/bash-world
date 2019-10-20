@@ -1,0 +1,21 @@
+##First Configure AWS setting in your OS.
+##Works on Ubuntu/CentOS
+
+aws-configure
+
+>access-id= 
+>access-key=
+>region=
+>output=
+
+
+=========
+
+find /var/log/ +mtime 60 -exec ls -la {} \;
+
+
+find /var/log/ +mtime 60 | aws s3 mv -  s3://poc-1montholdfile
+
+
+
+for i in `cat /tmp/s3-rev/filename.txt` ; do aws s3 cp s3://Bucketname/$i /tmp/s3-rev/ ; done
