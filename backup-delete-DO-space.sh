@@ -24,7 +24,7 @@ s3cmd del s3://wpbspace/$SPACENAME/code/$i$DATE"_120001"/$CODEFILENAME
 s3cmd del s3://$SPACENAME/mysqldump/$i$DATE"_000001"/$STAGEMYSQLFILENAME
 s3cmd del s3://$SPACENAME/mysqldump/$i$DATE"_000001"/$LIVEMYSQLFILENAME
 s3cmd del s3://$SPACENAME/mysqldump/$i$DATE"_120001"/$LIVEMYSQLFILENAME
-s3cmd del s3://SPACENAME/mysqldump/$i$DATE"_120001"/$STAGEMYSQLFILENAME
+s3cmd del s3://$SPACENAME/mysqldump/$i$DATE"_120001"/$STAGEMYSQLFILENAME
 
 
 done
