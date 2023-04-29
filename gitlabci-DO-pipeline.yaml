@@ -1,0 +1,94 @@
+# This file is a template, and might need editing before it works on your project.
+# To contribute improvements to CI/CD templates, please follow the Development guide at:
+# https://docs.gitlab.com/ee/development/cicd/templates.html
+# This specific template is located at:
+# https://gitlab.com/gitlab-org/gitlab/-/blob/master/lib/gitlab/ci/templates/Docker.gitlab-ci.yml
+
+# Build a Docker image with CI/CD and push to the GitLab registry.
+# Docker-in-Docker documentation: https://docs.gitlab.com/ee/ci/docker/using_docker_build.html
+#
+# This template uses one generic job with conditional builds
+# for the default branch and all other (MR) branches.
+stages:
+  - build
+  - package
+  - deploy
+  - deploy-prod
+
+maven-build:
+  image: maven:3.8.1-jdk-11-slim
+  stage: build
+  rules:
+  - if: $CI_COMMIT_BRANCH == "dev"
+  - if: $CI_COMMIT_BRANCH == "master"
+  - if: $CI_COMMIT_BRANCH == "master-ci"
+  script:
+    - mvn clean
+    - mvn package
+  artifacts:
+    paths:
+      - portal/target/*.jar
+      - portal-check/target/*.jar
+
+
+docker-build:
+  stage: package
+  image: docker:latest
+  services:
+    - docker:dind
+  variables:
+    DOCKER_TLS_CERTDIR: ""
+    DO_ACCESS_TOKEN: $DIGITALOCEAN_ACCESS_TOKEN
+  rules:
+    - if: $CI_COMMIT_BRANCH == "dev"
+    - if: $CI_COMMIT_BRANCH == "master"
+    - if: $CI_COMMIT_BRANCH == "master-ci"
+  script:
+    - echo "Installing doctl"
+    - mkdir tmp; cd tmp; wget https://github.com/digitalocean/doctl/releases/download/v1.92.0/doctl-1.92.0-linux-amd64.tar.gz
+    - tar xf doctl-1.92.0-linux-amd64.tar.gz
+    - mv doctl /usr/local/bin  && cd ..
+    - doctl auth init -t   ${DIGITALOCEAN_ACCESS_TOKEN}
+    - doctl auth list
+    - doctl registry login
+    - echo "Building Docker image..."
+    - docker build -t $CI_REGISTRY_IMAGE:$CI_COMMIT_SHORT_SHA .
+    - echo "Tagging Docker image for DigitalOcean registry..."
+    - docker tag $CI_REGISTRY_IMAGE:$CI_COMMIT_SHORT_SHA registry.digitalocean.com/my-regisitry-name/portal:$CI_COMMIT_SHORT_SHA
+    - echo "Showing the docker images list"
+    - docker images 
+    - echo "Pushing Docker image to DigitalOcean registry..."
+    - docker push registry.digitalocean.com/my-regisitry-name/portal:$CI_COMMIT_SHORT_SHA
+  dependencies:
+    - maven-build
+
+deploy:
+  stage: deploy
+  image: alpine/doctl:latest
+  rules:
+  - if: $CI_COMMIT_BRANCH == "dev"
+  - if: $CI_COMMIT_BRANCH == "master-ci"
+  variables:
+    KUBE_NAMESPACE: default
+  before_script:
+    - apk add --no-cache curl
+    - doctl auth init -t ${DIGITALOCEAN_ACCESS_TOKEN}
+  script:
+    - doctl kubernetes cluster kubeconfig save  my-k8s-cluster-dev
+    - kubectl set image deployment/dev-portal-deployment dev-portal=registry.digitalocean.com/my-regisitry-name/portal:$CI_COMMIT_SHORT_SHA
+
+
+deploy-prod:
+  stage: deploy
+  when: manual
+  image: alpine/doctl:latest
+  rules:
+  - if: $CI_COMMIT_BRANCH == "master"
+  variables:
+    KUBE_NAMESPACE: default
+  before_script:
+    - apk add --no-cache curl
+    - doctl auth init -t ${DIGITALOCEAN_ACCESS_TOKEN}
+  script:
+    - doctl kubernetes cluster kubeconfig save  my-k8s-cluster-prod
+    - kubectl set image deployment/portal-deployment portal=registry.digitalocean.com/my-regisitry-name/portal:$CI_COMMIT_SHORT_SHA
